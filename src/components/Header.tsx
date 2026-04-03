@@ -595,14 +595,12 @@ export default function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {settings.appLogo ? (
-                    <img
-                      src={settings.appLogo}
-                      alt={settings.appName}
-                      className="h-6 max-w-[110px] object-contain"
-                    />
-                  ) : (
-                    <span className="font-bold text-base text-primary">{settings.appName}</span>
-                  )}
+                  <img
+                    src="/icon.png"
+                    alt={settings.appName}
+                    className="h-6 max-w-[110px] object-contain"
+                    onError={e => { (e.target as HTMLImageElement).src = '/logo.jpg'; }}
+                  />
                 </Link>
                 <button
                   onClick={() => setMobileMenuOpen(false)}

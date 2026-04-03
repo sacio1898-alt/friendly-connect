@@ -185,11 +185,7 @@ export default function AdminPage() {
             <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="fixed left-0 top-0 bottom-0 w-64 bg-card z-50 flex flex-col">
               <div className="flex items-center justify-between p-4 border-b">
                 <div className="flex items-center gap-2">
-                  {settings.appLogo ? (
-                    <img src={settings.appLogo} alt={settings.appName} className="h-6 max-w-[110px] object-contain" />
-                  ) : (
-                    <span className="font-bold text-base text-primary">{settings.appName}</span>
-                  )}
+                  <img src="/icon.png" alt={settings.appName} className="h-6 max-w-[110px] object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.jpg'; }} />
                 </div>
                 <button onClick={() => setMenuOpen(false)} className="p-2"><X size={20} /></button>
               </div>
