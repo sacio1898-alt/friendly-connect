@@ -107,7 +107,7 @@ export interface AppSettings {
 
 const DEFAULT_SETTINGS: AppSettings = {
   appName: 'ZupraMart',
-  appLogo: '/logo.png',
+  appLogo: '/icon.png',
   phone: '',
   whatsapp: '',
   email: '',
