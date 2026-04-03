@@ -371,12 +371,6 @@ export default function CheckoutPage() {
 
           {paymentMethod === 'mobile' && (
             <div className="bg-muted/50 rounded-xl p-4 space-y-4 border border-border">
-              <div className="flex gap-2">
-                {['bKash', 'Nagad'].map(m => (
-                  <button key={m} onClick={() => setMobilePayment(p => ({ ...p, method: m }))}
-                    className={`flex-1 h-10 rounded-xl text-sm font-semibold transition-all ${mobilePayment.method === m ? (m === 'bKash' ? 'bg-pink-500 text-white' : 'bg-orange-500 text-white') : 'bg-card border border-border'}`}>{m}</button>
-                ))}
-              </div>
 
               <div className="bg-card rounded-xl p-3 border border-border">
                 <p className="text-xs text-muted-foreground mb-1">Send Money to this number:</p>
