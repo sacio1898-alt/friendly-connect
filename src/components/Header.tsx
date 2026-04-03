@@ -594,7 +594,6 @@ export default function Header() {
                   className="flex items-center gap-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {settings.appLogo ? (
                   <img
                     src="/icon.png"
                     alt={settings.appName}
