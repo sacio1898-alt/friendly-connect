@@ -171,11 +171,7 @@ export default function AdminPage() {
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border">
         <div className="flex items-center gap-3 px-4 h-14 max-w-screen-xl mx-auto">
           <button onClick={() => setMenuOpen(true)} className="p-2 hover:bg-muted rounded-lg"><Menu size={20} /></button>
-          {settings.appLogo ? (
-            <img src={settings.appLogo} alt={settings.appName} className="h-6 max-w-[110px] object-contain" />
-          ) : (
-            <span className="font-bold text-base text-primary">{settings.appName}</span>
-          )}
+          <img src="/icon.png" alt={settings.appName} className="h-7 max-w-[110px] object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.jpg'; }} />
           <span className="flex-1" />
           <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">Admin</span>
         </div>
