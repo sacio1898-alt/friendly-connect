@@ -9,8 +9,41 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Check, MapPin, CreditCard, ChevronRight, Banknote, Smartphone, Copy, Upload, ImageIcon, Tag, X, Gift, Shield, RotateCcw, CheckCircle, Monitor } from 'lucide-react';
+import { Check, MapPin, CreditCard, ChevronRight, Smartphone, Copy, ImageIcon, Tag, X, Gift, Shield, CheckCircle, Monitor, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+// ── Validation helpers ──────────────────────────────────────────────────────
+const BD_PHONE_REGEX = /^(?:\+?880|0)1[3-9]\d{8}$/;
+const TRXID_REGEX = /^[A-Za-z0-9]{6,20}$/;
+
+function validatePhone(phone: string): string | null {
+  const cleaned = phone.replace(/[\s-]/g, '');
+  if (!cleaned) return 'ফোন নম্বর দিন';
+  if (!BD_PHONE_REGEX.test(cleaned)) return 'সঠিক বাংলাদেশি নম্বর দিন (01XXXXXXXXX)';
+  return null;
+}
+
+function validateTrxId(id: string): string | null {
+  const cleaned = id.trim();
+  if (!cleaned) return null; // optional if screenshot given
+  if (!TRXID_REGEX.test(cleaned)) return 'Transaction ID ৬-২০ অক্ষরের হতে হবে (শুধু letters/numbers)';
+  return null;
+}
+
+function validateName(name: string): string | null {
+  const t = name.trim();
+  if (!t) return 'নাম দিন';
+  if (t.length < 3) return 'নাম কমপক্ষে ৩ অক্ষরের হতে হবে';
+  if (t.length > 100) return 'নাম অনেক বড়';
+  return null;
+}
+
+function validateAddress(address: string): string | null {
+  const t = address.trim();
+  if (!t) return 'ঠিকানা দিন';
+  if (t.length < 10) return 'সম্পূর্ণ ঠিকানা দিন (কমপক্ষে ১০ অক্ষর)';
+  return null;
+}
 
 export default function CheckoutPage() {
   const { items: cartItems, total: cartTotal, clearCart } = useCart();
@@ -25,6 +58,9 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponError, setCouponError] = useState('');
+
+  // Validation errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const stateItems = location.state?.selectedItems || cartItems;
   const isDigitalOrder = location.state?.isDigitalOrder || stateItems.every((i: any) => i.isDigital);
@@ -58,7 +94,6 @@ export default function CheckoutPage() {
   }
   const finalTotal = subtotal - discountAmount + deliveryCharge;
 
-  // For digital orders, skip shipping step
   const steps = isDigitalOrder
     ? [{ id: 1, label: 'Contact', icon: MapPin }, { id: 2, label: 'Payment', icon: CreditCard }]
     : [{ id: 1, label: 'Shipping', icon: MapPin }, { id: 2, label: 'Payment', icon: CreditCard }];
@@ -92,11 +127,15 @@ export default function CheckoutPage() {
     } finally { setCouponLoading(false); }
   };
 
-  const [screenshotUrlInput, setScreenshotUrlInput] = useState('');
   const [uploading, setUploading] = useState(false);
 
   const uploadToImgbb = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors(e => ({ ...e, screenshot: 'ফাইল সাইজ 5MB এর বেশি হতে পারবে না' }));
+      return;
+    }
     setUploading(true);
+    setErrors(e => ({ ...e, screenshot: '' }));
     try {
       const formData = new FormData();
       formData.append('image', file);
@@ -109,21 +148,54 @@ export default function CheckoutPage() {
         setMobilePayment(m => ({ ...m, screenshot: data.data.url }));
       }
     } catch (e) {
-      console.error('Upload failed', e);
+      setErrors(er => ({ ...er, screenshot: 'আপলোড ব্যর্থ হয়েছে' }));
     } finally {
       setUploading(false);
     }
   };
 
+  // ── Step 1 validation ─────────────────────────────────────────────────────
+  const validateStep1 = (): boolean => {
+    const errs: Record<string, string> = {};
+    const nameErr = validateName(shipping.name);
+    if (nameErr) errs.name = nameErr;
+    const phoneErr = validatePhone(shipping.phone);
+    if (phoneErr) errs.phone = phoneErr;
+    if (!isDigitalOrder) {
+      const addrErr = validateAddress(shipping.address);
+      if (addrErr) errs.address = addrErr;
+      if (deliveryAreas.length > 0 && selectedAreaIndex === -1) errs.area = 'ডেলিভারি এরিয়া সিলেক্ট করুন';
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  // ── Step 2 (payment) validation ───────────────────────────────────────────
+  const validateStep2 = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (paymentMethod === 'mobile') {
+      const pErr = validatePhone(mobilePayment.number);
+      if (pErr) errs.paymentPhone = pErr;
+      const tErr = validateTrxId(mobilePayment.transactionId);
+      if (tErr) errs.trxId = tErr;
+      if (!mobilePayment.transactionId.trim() && !mobilePayment.screenshot) {
+        errs.proof = 'Transaction ID অথবা Screenshot — যেকোনো একটি দিন';
+      }
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const placeOrder = async () => {
     if (!user) { navigate('/auth'); return; }
+    if (!validateStep2()) return;
     setLoading(true);
     try {
       const earnedPoints = Math.floor(finalTotal / 10);
       const orderData = {
         userId: user.uid,
         userEmail: user.email || '',
-        userName: shipping.name,
+        userName: shipping.name.trim(),
         items: stateItems.map((item: any) => ({
           productId: item.productId || '',
           name: item.name || '',
@@ -136,9 +208,9 @@ export default function CheckoutPage() {
           isDigital: !!item.isDigital,
         })),
         shipping: {
-          name: shipping.name || '',
-          phone: shipping.phone || '',
-          address: isDigitalOrder ? 'Digital Product' : (shipping.address || ''),
+          name: shipping.name.trim(),
+          phone: shipping.phone.replace(/[\s-]/g, ''),
+          address: isDigitalOrder ? 'Digital Product' : shipping.address.trim(),
         },
         delivery: isDigitalOrder ? { id: 'digital', label: 'Digital Delivery', time: 'Instant', price: 0 } : {
           id: 'standard',
@@ -150,8 +222,8 @@ export default function CheckoutPage() {
           method: paymentMethod || 'mobile',
           ...(paymentMethod === 'mobile' ? {
             method2: mobilePayment.method || '',
-            number: mobilePayment.number || '',
-            transactionId: mobilePayment.transactionId || '',
+            number: mobilePayment.number.replace(/[\s-]/g, ''),
+            transactionId: mobilePayment.transactionId.trim(),
             screenshot: mobilePayment.screenshot || '',
           } : {}),
         },
@@ -195,10 +267,22 @@ export default function CheckoutPage() {
     } finally { setLoading(false); }
   };
 
-  const sf = (k: string, v: string) => setShipping(s => ({ ...s, [k]: v }));
+  const sf = (k: string, v: string) => {
+    setShipping(s => ({ ...s, [k]: v }));
+    setErrors(e => ({ ...e, [k]: '' }));
+  };
   const copyNum = (num: string) => navigator.clipboard.writeText(num);
 
   const paymentStep = 2;
+
+  const FieldError = ({ field }: { field: string }) => {
+    if (!errors[field]) return null;
+    return (
+      <p className="text-destructive text-xs mt-1 flex items-center gap-1">
+        <AlertCircle size={11} /> {errors[field]}
+      </p>
+    );
+  };
 
   return (
     <div className="max-w-screen-md mx-auto px-4 py-5 pb-nav lg:pb-8">
@@ -266,11 +350,23 @@ export default function CheckoutPage() {
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
           <h2 className="font-bold">{isDigitalOrder ? 'Contact Information' : 'Shipping Address'}</h2>
           <div className="space-y-3">
-            <div className="space-y-1.5"><Label>Full Name *</Label><Input value={shipping.name} onChange={e => sf('name', e.target.value)} placeholder="আপনার পূর্ণ নাম" required /></div>
-            <div className="space-y-1.5"><Label>Phone Number *</Label><Input value={shipping.phone} onChange={e => sf('phone', e.target.value)} placeholder="+880XXXXXXXXXX" required /></div>
+            <div className="space-y-1.5">
+              <Label>Full Name *</Label>
+              <Input value={shipping.name} onChange={e => sf('name', e.target.value)} placeholder="আপনার পূর্ণ নাম" maxLength={100} />
+              <FieldError field="name" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Phone Number *</Label>
+              <Input value={shipping.phone} onChange={e => sf('phone', e.target.value)} placeholder="01XXXXXXXXX" maxLength={15} inputMode="tel" />
+              <FieldError field="phone" />
+            </div>
             {!isDigitalOrder && (
               <>
-                <div className="space-y-1.5"><Label>Detailed Address *</Label><Input value={shipping.address} onChange={e => sf('address', e.target.value)} placeholder="বাড়ি নং, রোড, এলাকা, জেলা" required /></div>
+                <div className="space-y-1.5">
+                  <Label>Detailed Address *</Label>
+                  <Input value={shipping.address} onChange={e => sf('address', e.target.value)} placeholder="বাড়ি নং, রোড, এলাকা, জেলা" maxLength={300} />
+                  <FieldError field="address" />
+                </div>
                 {deliveryAreas.length > 0 && (
                   <div className="space-y-2">
                     <Label>Delivery Area *</Label>
@@ -279,7 +375,7 @@ export default function CheckoutPage() {
                         <button
                           key={i}
                           type="button"
-                          onClick={() => setSelectedAreaIndex(i)}
+                          onClick={() => { setSelectedAreaIndex(i); setErrors(e => ({ ...e, area: '' })); }}
                           className={`relative flex flex-col items-start gap-1 rounded-xl border-2 p-3 text-left transition-all ${
                             selectedAreaIndex === i
                               ? 'border-primary bg-primary/5 shadow-sm'
@@ -300,15 +396,13 @@ export default function CheckoutPage() {
                         </button>
                       ))}
                     </div>
-                    {selectedAreaIndex === -1 && (
-                      <p className="text-xs text-amber-600 font-medium">⚠️ ডেলিভারি এরিয়া সিলেক্ট করুন</p>
-                    )}
+                    <FieldError field="area" />
                   </div>
                 )}
               </>
             )}
           </div>
-          <Button className="w-full h-12 font-semibold" onClick={() => setStep(2)} disabled={!shipping.name || !shipping.phone || (!isDigitalOrder && !shipping.address) || (!isDigitalOrder && deliveryAreas.length > 0 && selectedAreaIndex === -1)}>
+          <Button className="w-full h-12 font-semibold" onClick={() => { if (validateStep1()) setStep(2); }}>
             Continue <ChevronRight size={16} className="ml-2" />
           </Button>
         </motion.div>
@@ -334,7 +428,7 @@ export default function CheckoutPage() {
             ) : (
               <>
                 <div className="flex gap-2">
-                  <Input placeholder="Coupon code" value={couponCode} onChange={e => setCouponCode(e.target.value)} className="h-9 text-sm flex-1" />
+                  <Input placeholder="Coupon code" value={couponCode} onChange={e => setCouponCode(e.target.value)} className="h-9 text-sm flex-1" maxLength={30} />
                   <Button size="sm" variant="outline" onClick={applyCouponCode} disabled={couponLoading} className="h-9">Apply</Button>
                 </div>
                 {couponError && <p className="text-destructive text-xs mt-2">{couponError}</p>}
@@ -382,12 +476,27 @@ export default function CheckoutPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs">Payment Number</Label>
-                <Input value={mobilePayment.number} onChange={e => setMobilePayment(m => ({ ...m, number: e.target.value }))} placeholder="আপনার নম্বর" className="h-9 text-sm" />
+                <Label className="text-xs">Payment Number *</Label>
+                <Input
+                  value={mobilePayment.number}
+                  onChange={e => { setMobilePayment(m => ({ ...m, number: e.target.value })); setErrors(er => ({ ...er, paymentPhone: '' })); }}
+                  placeholder="01XXXXXXXXX"
+                  className="h-9 text-sm"
+                  maxLength={15}
+                  inputMode="tel"
+                />
+                <FieldError field="paymentPhone" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Transaction ID</Label>
-                <Input value={mobilePayment.transactionId} onChange={e => setMobilePayment(m => ({ ...m, transactionId: e.target.value }))} placeholder="TrxID" className="h-9 text-sm" />
+                <Input
+                  value={mobilePayment.transactionId}
+                  onChange={e => { setMobilePayment(m => ({ ...m, transactionId: e.target.value })); setErrors(er => ({ ...er, trxId: '', proof: '' })); }}
+                  placeholder="TrxID (e.g. ABC123XYZ)"
+                  className="h-9 text-sm"
+                  maxLength={20}
+                />
+                <FieldError field="trxId" />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-medium">Payment Screenshot</Label>
@@ -419,7 +528,9 @@ export default function CheckoutPage() {
                     <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; if (f) uploadToImgbb(f); }} />
                   </label>
                 )}
+                <FieldError field="screenshot" />
               </div>
+              <FieldError field="proof" />
               <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Shield size={10} /> Transaction ID অথবা Screenshot — যেকোনো একটি দিন।</p>
             </div>
           )}
@@ -434,7 +545,7 @@ export default function CheckoutPage() {
 
           <div className="flex gap-3">
             <Button variant="outline" className="flex-1 h-12" onClick={() => setStep(1)}>Back</Button>
-            <Button className="flex-1 h-12 font-semibold" onClick={placeOrder} disabled={loading || (paymentMethod === 'mobile' && !mobilePayment.number)}>
+            <Button className="flex-1 h-12 font-semibold" onClick={placeOrder} disabled={loading}>
               {loading ? 'Processing...' : `Place Order — ৳${finalTotal.toFixed(0)}`}
             </Button>
           </div>
