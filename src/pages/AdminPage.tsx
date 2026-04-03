@@ -171,11 +171,7 @@ export default function AdminPage() {
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border">
         <div className="flex items-center gap-3 px-4 h-14 max-w-screen-xl mx-auto">
           <button onClick={() => setMenuOpen(true)} className="p-2 hover:bg-muted rounded-lg"><Menu size={20} /></button>
-          {settings.appLogo ? (
-            <img src={settings.appLogo} alt={settings.appName} className="h-6 max-w-[110px] object-contain" />
-          ) : (
-            <span className="font-bold text-base text-primary">{settings.appName}</span>
-          )}
+          <img src="/icon.png" alt={settings.appName} className="h-7 max-w-[110px] object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.jpg'; }} />
           <span className="flex-1" />
           <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">Admin</span>
         </div>
@@ -189,11 +185,7 @@ export default function AdminPage() {
             <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="fixed left-0 top-0 bottom-0 w-64 bg-card z-50 flex flex-col">
               <div className="flex items-center justify-between p-4 border-b">
                 <div className="flex items-center gap-2">
-                  {settings.appLogo ? (
-                    <img src={settings.appLogo} alt={settings.appName} className="h-6 max-w-[110px] object-contain" />
-                  ) : (
-                    <span className="font-bold text-base text-primary">{settings.appName}</span>
-                  )}
+                  <img src="/icon.png" alt={settings.appName} className="h-6 max-w-[110px] object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.jpg'; }} />
                 </div>
                 <button onClick={() => setMenuOpen(false)} className="p-2"><X size={20} /></button>
               </div>
@@ -555,15 +547,6 @@ export default function AdminPage() {
               <p className="text-xs text-muted-foreground">e.g., 10 = 10 points = ৳1 discount.</p>
             </div>
 
-            <div className="space-y-1.5">
-              <Label>App Logo</Label>
-              {(form.appLogo || settings.appLogo) && <img src={form.appLogo || settings.appLogo} alt="Logo" className="w-16 h-16 rounded-lg object-contain border border-border" />}
-              <div className="flex gap-2">
-                <Input value={imageUrlInput} onChange={e => setImageUrlInput(e.target.value)} placeholder="Image URL paste করুন" className="flex-1 text-xs" />
-                <Button type="button" size="sm" variant="outline" onClick={() => addImageUrl('appLogo')}>Add</Button>
-                <Button type="button" size="sm" variant="secondary" onClick={() => window.open('https://postimg.cc', '_blank')}>Get URL</Button>
-              </div>
-            </div>
             {/* Support Channel Toggles */}
             <div className="space-y-3 p-3 bg-muted/50 rounded-xl border border-border">
               <p className="text-xs font-semibold text-primary">সাপোর্ট চ্যানেল (ফ্লোটিং বাটনে দেখাবে)</p>

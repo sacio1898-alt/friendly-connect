@@ -366,7 +366,7 @@ export default function AuthPage() {
 
           <div className="auth-logo-row">
             <img
-              src={settings.appLogo || '/logo.jpg'}
+              src="/icon.png"
               alt={settings.appName}
               onError={e => { (e.target as HTMLImageElement).src = '/logo.jpg'; }}
             />

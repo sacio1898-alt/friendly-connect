@@ -343,30 +343,34 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-3">
             {!isDigitalOrder && (
-              <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                <input type="radio" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="sr-only" />
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === 'cod' ? 'border-primary' : 'border-border'}`}>{paymentMethod === 'cod' && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}</div>
-                <div className="flex-1"><p className="font-semibold text-sm flex items-center gap-2"><Banknote size={16} /> Cash on Delivery</p><p className="text-xs text-muted-foreground">পণ্য পেয়ে পেমেন্ট করুন</p></div>
-              </label>
+              <button
+                onClick={() => setPaymentMethod('cod')}
+                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${paymentMethod === 'cod' ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-primary/40'}`}
+              >
+                <img src="/cod.png" alt="Cash on Delivery" className="h-10 w-auto object-contain" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'cod' ? 'border-primary' : 'border-muted-foreground/40'}`}>
+                  {paymentMethod === 'cod' && <div className="w-2 h-2 rounded-full bg-primary" />}
+                </div>
+              </button>
             )}
-
-            <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${paymentMethod === 'mobile' ? 'border-primary bg-primary/5' : 'border-border'}`}>
-              <input type="radio" checked={paymentMethod === 'mobile'} onChange={() => setPaymentMethod('mobile')} className="sr-only" />
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMethod === 'mobile' ? 'border-primary' : 'border-border'}`}>{paymentMethod === 'mobile' && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}</div>
-              <div className="flex-1"><p className="font-semibold text-sm flex items-center gap-2"><Smartphone size={16} /> Mobile Banking</p><p className="text-xs text-muted-foreground">bKash / Nagad</p></div>
-            </label>
+            {['bKash', 'Nagad'].map(m => (
+              <button
+                key={m}
+                onClick={() => { setPaymentMethod('mobile'); setMobilePayment(p => ({ ...p, method: m })); }}
+                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${paymentMethod === 'mobile' && mobilePayment.method === m ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-primary/40'}`}
+              >
+                <img src={m === 'bKash' ? '/bkash.png' : '/nagad.png'} alt={m} className="h-10 w-auto object-contain" />
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'mobile' && mobilePayment.method === m ? 'border-primary' : 'border-muted-foreground/40'}`}>
+                  {paymentMethod === 'mobile' && mobilePayment.method === m && <div className="w-2 h-2 rounded-full bg-primary" />}
+                </div>
+              </button>
+            ))}
           </div>
 
           {paymentMethod === 'mobile' && (
             <div className="bg-muted/50 rounded-xl p-4 space-y-4 border border-border">
-              <div className="flex gap-2">
-                {['bKash', 'Nagad'].map(m => (
-                  <button key={m} onClick={() => setMobilePayment(p => ({ ...p, method: m }))}
-                    className={`flex-1 h-10 rounded-xl text-sm font-semibold transition-all ${mobilePayment.method === m ? (m === 'bKash' ? 'bg-pink-500 text-white' : 'bg-orange-500 text-white') : 'bg-card border border-border'}`}>{m}</button>
-                ))}
-              </div>
 
               <div className="bg-card rounded-xl p-3 border border-border">
                 <p className="text-xs text-muted-foreground mb-1">Send Money to this number:</p>
