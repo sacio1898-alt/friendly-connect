@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="max-w-screen-xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6">
         <div>
           <div className="mb-3">
-            <img src={settings.appLogo || '/logo.jpg'} alt={settings.appName} className="h-8 max-w-[140px] object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.jpg'; }} />
+            <img src="/icon.png" alt={settings.appName} className="h-8 max-w-[140px] object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.jpg'; }} />
           </div>
           <p className="text-xs leading-relaxed">আপনার বিশ্বস্ত অনলাইন শপিং প্ল্যাটফর্ম।</p>
         </div>
