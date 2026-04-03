@@ -342,15 +342,12 @@ export default function Header() {
           </button>
 
           <Link to="/" className="flex-1 flex items-center">
-            {settings.appLogo ? (
-              <img
-                src={settings.appLogo}
-                alt={settings.appName}
-                className="h-6 max-w-[120px] object-contain"
-              />
-            ) : (
-              <span className="font-bold text-base text-primary">{settings.appName}</span>
-            )}
+            <img
+              src="/icon.png"
+              alt={settings.appName}
+              className="h-8 max-w-[120px] object-contain"
+              onError={e => { (e.target as HTMLImageElement).src = '/logo.jpg'; }}
+            />
           </Link>
 
           {user && userData && (
