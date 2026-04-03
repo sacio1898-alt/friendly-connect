@@ -555,15 +555,6 @@ export default function AdminPage() {
               <p className="text-xs text-muted-foreground">e.g., 10 = 10 points = ৳1 discount.</p>
             </div>
 
-            <div className="space-y-1.5">
-              <Label>App Logo</Label>
-              {(form.appLogo || settings.appLogo) && <img src={form.appLogo || settings.appLogo} alt="Logo" className="w-16 h-16 rounded-lg object-contain border border-border" />}
-              <div className="flex gap-2">
-                <Input value={imageUrlInput} onChange={e => setImageUrlInput(e.target.value)} placeholder="Image URL paste করুন" className="flex-1 text-xs" />
-                <Button type="button" size="sm" variant="outline" onClick={() => addImageUrl('appLogo')}>Add</Button>
-                <Button type="button" size="sm" variant="secondary" onClick={() => window.open('https://postimg.cc', '_blank')}>Get URL</Button>
-              </div>
-            </div>
             {/* Support Channel Toggles */}
             <div className="space-y-3 p-3 bg-muted/50 rounded-xl border border-border">
               <p className="text-xs font-semibold text-primary">সাপোর্ট চ্যানেল (ফ্লোটিং বাটনে দেখাবে)</p>

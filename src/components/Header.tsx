@@ -379,15 +379,12 @@ export default function Header() {
         {/* ── Desktop header ───────────────────────────────────────────────── */}
         <div className="hidden lg:flex items-center gap-6 px-6 h-16 max-w-screen-xl mx-auto">
           <Link to="/" className="flex items-center shrink-0">
-            {settings.appLogo ? (
-              <img
-                src={settings.appLogo}
-                alt={settings.appName}
-                className="h-7 max-w-[140px] object-contain"
-              />
-            ) : (
-              <span className="font-bold text-lg text-primary">{settings.appName}</span>
-            )}
+            <img
+              src="/icon.png"
+              alt={settings.appName}
+              className="h-8 max-w-[160px] object-contain"
+              onError={e => { (e.target as HTMLImageElement).src = '/logo.jpg'; }}
+            />
           </Link>
 
           <div className="flex-1 max-w-xl">

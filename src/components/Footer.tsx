@@ -40,12 +40,9 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="mt-6 pt-4 border-t border-border">
+      <div className="mt-6 pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p className="text-xs">&copy; {new Date().getFullYear()} {settings.appName}. All rights reserved.</p>
         <TrustBadges />
-      </div>
-
-      <div className="mt-4 pt-4 border-t border-border text-center text-xs">
-        &copy; {new Date().getFullYear()} {settings.appName}. All rights reserved.
       </div>
     </footer>
   );
