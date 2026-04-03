@@ -1,0 +1,18 @@
+{
+  "name": "ZupraMart",
+  "short_name": "ZupraMart",
+  "description": "Discover amazing products at great prices",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
